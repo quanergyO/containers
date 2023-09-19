@@ -1,19 +1,24 @@
 #ifndef CONDITIONAL_H
 #define CONDITIONAL_H
 
-template<bool B, typename T, typename F>
+namespace S21
+{
+
+template<bool B, typename T1, typename T2>
 struct conditional
 {
-    using type = F;
+    using type = T1;
 };
 
-template<typename T, typename F>
-struct conditional<true, T, F>
+template<typename T1, typename T2>
+struct conditional<true, T1, T2>
 {
-    using type = T;
+    using type = T2;
 };
 
-template <bool B, typename T, typename F>
-using conditional_t = typename conditional<B, T, F>::type;
+template <bool B, typename T1, typename T2>
+using conditional_t = typename conditional<B, T1, T2>::type;
+
+} // namespace S21
 
 #endif // CONDITIONAL_H

@@ -1,6 +1,5 @@
-#include "vector.h"
-#include <array>
 #include <iostream>
+#include "vectorOld.h"
 
 struct S {
     int a;
@@ -11,7 +10,7 @@ struct S {
 
 int main()
 {
-    std::array<S, 10> s;
+    S21::Vector<int> s(5);
 
     return 0;
 }
