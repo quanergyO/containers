@@ -1,84 +1,77 @@
 #include <iostream>
+#include "conditional.h"
 
 template <typename T>
 class Vector
 {
 private:
-    T* begin_;
-    T* end_;
-    T* buff_end_;
+    T* arr;
+    size_t size_;
+    size_t capacity_;
 public:
+
+    template<bool isConst>
+    struct common_iterator {
+    private:
+        conditional_t<isConst, const T*, T*> ptr;
+    public:
+        common_iterator(T* ptr) : ptr(ptr) {}
+
+        conditional_t<isConst, const T*, T*>& operator*()
+        {
+            return *ptr;
+        }
+
+        conditional_t<isConst, const T*, T*>* operator->()
+        {
+            return ptr;
+        }
+
+        common_iterator& operator++()
+        {
+            ++ptr;
+            return *this;
+        }
+
+        common_iterator& operator++(int)
+        {
+            T* returnValue = ptr;
+            ++ptr;
+            return returnValue;
+        }
+    };
+
+    using iterator = common_iterator<true>;
+    using const_iterator = common_iterator<false>;
+
+    iterator begin() const noexcept
+    {
+        return iterator(arr);
+    }
+
+    iterator end() const noexcept
+    {
+        return iterator(arr+size_);
+    }
+
+    iterator rbegin() const noexcept
+    {
+        return iterator(arr+size_-1);
+    }
+
+    iterator rend() const noexcept
+    {
+        return iterator(arr-1);
+    }
+
     size_t size() const noexcept
     {
-        return end_ - begin_;
+        return size_;
     }
 
     size_t capacity() const noexcept
     {
-        return buff_end_ - begin_;
-    }
-
-    Vector(size_t count, const T& value = T())
-        : begin_(reinterpret_cast<T*>(new char[count * sizeof(T)]))
-        , end_ (begin_ + count)
-        , buff_end_ (begin_ + count)
-    {
-        T* it = begin_;
-        try
-        {
-            for (; it != end_; ++it)
-            {
-                new (it) T(value);
-            }
-        }
-        catch (...)
-        {
-            for (T* del = begin_; del != it; ++del)
-            {
-                del->~T();
-            }
-            delete[] reinterpret_cast<char*>(begin_);
-            throw;
-        }
-    }
-
-    void reserve(const size_t newCap)
-    {
-        if (capacity() > newCap) return;
-        T* newArr = reinterpret_cast<T*>(new char[newCap * sizeof(T)]);
-        size_t i = 0;
-        try
-        {
-            for (; i < size(); ++i)
-            {
-                new (newArr + i) T(begin_[i]);
-            }
-        } catch (...)
-        {
-            for (size_t j = 0; j < i; ++j) {
-                (newArr + j)->~T();
-            }
-            delete[] reinterpret_cast<char*>(newArr);
-            throw;
-        }
-        size_t end = size();
-        for (T* del = begin_; del != end_; ++del) {
-            del->~T();
-        }
-        delete[] reinterpret_cast<char*>(begin_);
-        begin_ = newArr;
-        end_ = begin_ + end;
-        buff_end_ = begin_ + newCap;
-    }
-
-    void push_back(const T& value)
-    {
-        if (end_ == buff_end_) {
-            reserve(std::max(1, 2 * capacity()));
-        }
-
-        new (end_) T(value);
-        ++end_;
+        return capacity_;
     }
 
 };
