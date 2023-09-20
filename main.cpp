@@ -1,5 +1,5 @@
 #include <iostream>
-#include "vectorOld.h"
+#include "vector.h"
 
 struct S {
     int a;
@@ -10,7 +10,13 @@ struct S {
 
 int main()
 {
-    S21::Vector<int> s(5);
+    S21::Vector<int> s(1);
+    for (size_t i = 0; i < 100; ++i)
+    {
+        s.push_back(i);
+    }
+    for (auto x : s)
+        std::cout << x << ' ';
 
     return 0;
 }
