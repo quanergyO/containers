@@ -1,6 +1,17 @@
+<<<<<<< HEAD
 #pragma once
 #include <iterator>
 
+=======
+#ifndef ITERATOR_H
+#define ITERATOR_H
+
+#include <iterator>
+
+namespace S21
+{
+
+>>>>>>> 8a126b576e22f66a6deb148d8890e466814a6f83
 template <typename T>
 class RandomAccessIterator
 {
@@ -105,6 +116,14 @@ public:
         return ptr_;
     }
 
+<<<<<<< HEAD
+=======
+    T& operator[](int index)
+    {
+        return *(ptr_ + index);
+    }
+
+>>>>>>> 8a126b576e22f66a6deb148d8890e466814a6f83
     bool operator<(const RandomAccessIterator<T> &rhs) const noexcept
     {
         return ptr_ < rhs.ptr_;
@@ -126,9 +145,19 @@ public:
     }
 
 
+<<<<<<< HEAD
 
 
 
 private:
     T* ptr_;
 };
+=======
+private:
+    T* ptr_;
+};
+
+} // namespace S21
+
+#endif // ITERATOR_H
+>>>>>>> 8a126b576e22f66a6deb148d8890e466814a6f83

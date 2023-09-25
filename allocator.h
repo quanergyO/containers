@@ -21,7 +21,7 @@ public:
     template<typename U, typename ... Args>
     void construct(U* ptr, Args&&... args)
     {
-        new(ptr) T(std::forward<Args>(args)...);
+        new(static_cast<void*>(ptr)) T(std::forward<Args>(args)...);
     }
 
     void destroy(T* ptr)
