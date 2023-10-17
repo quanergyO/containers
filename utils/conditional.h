@@ -1,5 +1,5 @@
-#ifndef CONDITIONAL_H
-#define CONDITIONAL_H
+#ifndef CPP2_S21_CONTAINERS_1_UTILS_CONDITIONAL_H
+#define CPP2_S21_CONTAINERS_1_UTILS_CONDITIONAL_H
 
 namespace S21
 {
@@ -21,4 +21,4 @@ using conditional_t = typename conditional<B, T1, T2>::type;
 
 } // namespace S21
 
-#endif // CONDITIONAL_H
+#endif // CPP2_S21_CONTAINERS_1_UTILS_CONDITIONAL_H
