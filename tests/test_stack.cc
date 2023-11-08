@@ -1,8 +1,8 @@
 #include <list>
 #include <stack>
 
-#include "../list/list.h"
-#include "../stack/stack.h"
+#include "../src/list/list.h"
+#include "../src/stack/stack.h"
 
 TEST(Stack, True) {
   s21::stack<int> a;
@@ -30,4 +30,58 @@ TEST(Stack, True) {
   ASSERT_EQ(a.top(), f.top());
   aa.swap(f);
   ASSERT_EQ(aa.top(), ff.top());
+}
+
+TEST(Stack, InsertMany) {
+  s21::stack<int> school1;
+  std::stack<int> std1;
+  for (int i = 0; i < 10; ++i) {
+    school1.push(i);
+    std1.push(i);
+  }
+  std1.push(7);
+  std1.push(7);
+  std1.push(7);
+  school1.insert_many_front(7, 7, 7);
+  while (!school1.empty()) {
+    ASSERT_EQ(school1.top(), std1.top());
+    school1.pop();
+    std1.pop();
+  }
+}
+
+TEST(Stack, MoveConstructor) {
+  s21::stack<int> school1;
+  std::stack<int> std1;
+  for (int i = 0; i < 10; ++i) {
+    school1.push(i);
+    std1.push(i);
+  }
+  s21::stack<int> school2 = std::move(school1);
+  std::stack<int> std2 = std::move(std1);
+  while (!school2.empty()) {
+    ASSERT_EQ(school2.top(), std2.top());
+    school2.pop();
+    std2.pop();
+  }
+  ASSERT_EQ(school1.empty(), true);
+}
+
+TEST(Stack, OperatorMoveEqual) {
+  s21::stack<int> school1;
+  std::stack<int> std1;
+  for (int i = 0; i < 10; ++i) {
+    school1.push(i);
+    std1.push(i);
+  }
+  s21::stack<int> school2;
+  std::stack<int> std2;
+  school2 = std::move(school1);
+  std2 = std::move(std1);
+  while (!school2.empty()) {
+    ASSERT_EQ(school2.top(), std2.top());
+    school2.pop();
+    std2.pop();
+  }
+  ASSERT_EQ(school1.empty(), true);
 }

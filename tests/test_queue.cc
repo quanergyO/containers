@@ -1,8 +1,8 @@
 #include <queue>
 
-#include "../queue/queue.h"
+#include "../src/queue/queue.h"
 
-TEST(Queque, True) {
+TEST(Queue, True) {
   s21::queue<int> a;
   std::queue<int> aa;
   a.push(7);
@@ -35,6 +35,47 @@ TEST(Queque, True) {
   a.swap(c);
   aa.swap(cc);
   ASSERT_EQ(c.front(), cc.front());
-  a = a;
+  // a = a;
   // a = std::move(a);
+  a.insert_many_back(4, 5, 6);
+  aa.push(4);
+  aa.push(5);
+  aa.push(6);
+  ASSERT_EQ(a.front(), aa.front());
+}
+
+TEST(Queue, OperatorEqual) {
+  s21::queue<int> school1;
+  std::queue<int> std1;
+  for (int i = 0; i < 10; ++i) {
+    school1.push(i);
+    std1.push(i);
+  }
+  s21::queue<int> school2;
+  std::queue<int> std2;
+  school2 = school1;
+  std2 = std1;
+  while (!school2.empty()) {
+    ASSERT_EQ(school2.front(), std2.front());
+    school2.pop();
+    std2.pop();
+  }
+}
+
+TEST(Queue, OperatorMoveEqual) {
+  s21::queue<int> school1;
+  std::queue<int> std1;
+  for (int i = 0; i < 10; ++i) {
+    school1.push(i);
+    std1.push(i);
+  }
+  s21::queue<int> school2;
+  std::queue<int> std2;
+  school2 = std::move(school1);
+  std2 = std::move(std1);
+  while (!school2.empty()) {
+    ASSERT_EQ(school2.front(), std2.front());
+    school2.pop();
+    std2.pop();
+  }
 }

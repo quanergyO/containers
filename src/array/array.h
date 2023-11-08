@@ -2,6 +2,7 @@
 #define CPP2_S21_CONSTAINERS_1_ARRAY_ARRAY_H_
 
 #include <cstddef>
+#include <exception>
 
 #include "../iterators/random_access_iterator.h"
 
@@ -39,10 +40,14 @@ struct array {
 
   reference at(size_t pos) {
     if (pos >= size_ || size_ == 0) {
-      throw;
+      throw std::out_of_range("Index out of range");
     }
     return data_[pos];
   }
+
+  const_reference front() const noexcept { return data_[0]; }
+
+  const_reference back() const noexcept { return data_[size_ - 1]; }
 
   reference operator[](size_type index) { return data_[index]; }
 
@@ -60,24 +65,15 @@ struct array {
 
   const_iterator cend() const { return const_iterator(data_ + N); }
 
-
   bool empty() const noexcept { return !size_; }
 
   size_type size() const noexcept { return N; }
 
-  size_type max_size() const noexcept {
-    return N;
-    // return std::numeric_limits<std::size_t>::max() / sizeof(value_type);
-  }
+  size_type max_size() const noexcept { return N; }
 
   void swap(array &rhs) {
-    // TODO swap pointers
-    value_type tmp;
-    for (size_type i = 0; i < size_; ++i) {
-      tmp = rhs.data_[i];
-      rhs.data_[i] = data_[i];
-      data_[i] = tmp;
-    }
+    std::swap(data_, rhs.data_);
+    std::swap(size_, rhs.size_);
   }
 
   void fill(const_reference value) {

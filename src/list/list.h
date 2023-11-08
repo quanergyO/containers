@@ -1,14 +1,15 @@
 #ifndef CPP2_S21_CONTAINERS_1_LIST_LIST_H_
 #define CPP2_S21_CONTAINERS_1_LIST_LIST_H_
 
+#include <algorithm>
 #include <cstddef>
 #include <initializer_list>
+#include <limits>
 #include <memory>
 #include <utility>
-#include <algorithm>
 
 #include "../iterators/bidirectional_iterator.h"
-#include "../utils/allocator.h"
+#include "../../utils/allocator.h"
 
 namespace s21 {
 
@@ -27,8 +28,12 @@ class list {
       allocator_type>::template rebind_alloc<ListNode<T>>;
 
   list(const Allocator &alloc = Allocator())
-      : allocator_(alloc),
-        allocator_node_(node_allocator()),
+      : allocator_(
+            std::allocator_traits<
+                allocator_type>::select_on_container_copy_construction(alloc)),
+        allocator_node_(
+            std::allocator_traits<node_allocator>::
+                select_on_container_copy_construction(node_allocator())),
         size_(0),
         phantom_node_(std::allocator_traits<node_allocator>::allocate(
             allocator_node_, 1)) {
@@ -37,11 +42,7 @@ class list {
   }
 
   explicit list(size_type n, const Allocator &alloc = Allocator())
-      : allocator_(alloc),
-        allocator_node_(node_allocator()),
-        size_(0),
-        phantom_node_(std::allocator_traits<node_allocator>::allocate(
-            allocator_node_, 1)) {
+      : list(alloc) {
     for (size_t i = 0; i < n; ++i) {
       push_back(T());
     }
@@ -49,19 +50,18 @@ class list {
 
   list(std::initializer_list<value_type> const &items,
        const Allocator &alloc = Allocator())
-      : allocator_(alloc),
-        allocator_node_(node_allocator()),
-        size_(0),
-        phantom_node_(std::allocator_traits<node_allocator>::allocate(
-            allocator_node_, 1)) {
+      : list(alloc) {
     for (auto &item : items) {
       push_back(item);
     }
   }
 
   list(const list &rhs)
-      : allocator_(rhs.allocator_),
-        allocator_node_(rhs.allocator_node_),
+      : allocator_(std::allocator_traits<allocator_type>::
+                       select_on_container_copy_construction(rhs.allocator_)),
+        allocator_node_(
+            std::allocator_traits<node_allocator>::
+                select_on_container_copy_construction(rhs.allocator_node_)),
         size_(0),
         phantom_node_(std::allocator_traits<node_allocator>::allocate(
             allocator_node_, 1)) {
@@ -70,12 +70,11 @@ class list {
     }
   }
 
-list(list &&rhs) noexcept
-    : allocator_(std::move(rhs.allocator_)),
-      allocator_node_(std::move(rhs.allocator_node_)),
-      size_(std::exchange(rhs.size_, 0)),
-      phantom_node_(std::exchange(rhs.phantom_node_, nullptr)) {
-}
+  list(list &&rhs) noexcept
+      : allocator_(std::move(rhs.allocator_)),
+        allocator_node_(std::move(rhs.allocator_node_)),
+        size_(std::exchange(rhs.size_, 0)),
+        phantom_node_(std::exchange(rhs.phantom_node_, nullptr)) {}
 
   list &operator=(const list &rhs) {
     if (this == &rhs) {
@@ -91,7 +90,6 @@ list(list &&rhs) noexcept
     if (this == &rhs) return *this;
     swap(rhs);
     rhs.clear();
-    deallocate_node(rhs.phantom_node_);
     return *this;
   }
 
@@ -114,32 +112,36 @@ list(list &&rhs) noexcept
     return phantom_node_->prev_->data_;
   }
 
-  iterator begin() { return iterator(phantom_node_->next_); }
+  iterator begin() noexcept { return iterator(phantom_node_->next_); }
 
-  const_iterator begin() const { return const_iterator(phantom_node_->next_); }
+  iterator begin() const noexcept { return iterator(phantom_node_->next_); }
 
-  iterator end() { return iterator(phantom_node_); }
+  iterator end() noexcept { return iterator(phantom_node_); }
 
-  const_iterator end() const { return const_iterator(phantom_node_); }
+  iterator end() const noexcept { return iterator(phantom_node_); }
 
-  const_iterator cbegin() const { return const_iterator(phantom_node_->next_); }
+  const_iterator cbegin() const noexcept {
+    return const_iterator(phantom_node_->next_);
+  }
 
-  const_iterator cend() const { return const_iterator(phantom_node_); }
+  const_iterator cend() const noexcept { return const_iterator(phantom_node_); }
 
-  iterator rbegin() { return iterator(phantom_node_->prev_); }
+  iterator rbegin() noexcept { return iterator(phantom_node_->prev_); }
 
-  iterator rend() { return iterator(phantom_node_); }
+  iterator rend() noexcept { return iterator(phantom_node_); }
 
-  const_iterator rbegin() const { return const_iterator(phantom_node_->prev_); }
+  const_iterator rbegin() const noexcept {
+    return const_iterator(phantom_node_->prev_);
+  }
 
-  const_iterator rend() const { return const_iterator(phantom_node_); }
+  const_iterator rend() const noexcept { return const_iterator(phantom_node_); }
 
   bool empty() const noexcept { return size_ == 0; }
 
   size_type size() const noexcept { return size_; }
 
   size_type max_size() const noexcept {
-      return std::numeric_limits<size_type>::max() / sizeof(value_type);
+    return std::numeric_limits<size_type>::max() / sizeof(value_type);
   }
 
   void clear() {
@@ -195,38 +197,38 @@ list(list &&rhs) noexcept
 
   void merge(list &rhs) {
     if (rhs.empty()) {
-        return;
+      return;
     }
     if (empty()) {
-        swap(rhs);
-        return;
+      swap(rhs);
+      return;
     }
 
     ListNode<T> *current = phantom_node_->next_;
     ListNode<T> *rhs_current = rhs.phantom_node_->next_;
 
     while (current != phantom_node_ && rhs_current != rhs.phantom_node_) {
-        if (rhs_current->data_ <= current->data_) {
-            rhs_current->prev_->next_ = rhs_current->next_;
-            rhs_current->next_->prev_ = rhs_current->prev_;
-            ListNode<T> *next_rhs = rhs_current->next_;
-            setup_connections(rhs_current, current, current->prev_);
-            setup_next(current->prev_, rhs_current);
-            setup_prev(current, rhs_current);
-            rhs_current = next_rhs;
-        } else {
-            current = current->next_;
-        }
-    }
-
-    while (rhs_current != rhs.phantom_node_) {
+      if (rhs_current->data_ <= current->data_) {
         rhs_current->prev_->next_ = rhs_current->next_;
         rhs_current->next_->prev_ = rhs_current->prev_;
         ListNode<T> *next_rhs = rhs_current->next_;
-        setup_connections(rhs_current, phantom_node_, phantom_node_->prev_);
-        setup_next(phantom_node_->prev_, rhs_current);
-        setup_prev(phantom_node_, rhs_current);
+        setup_connections(rhs_current, current, current->prev_);
+        setup_next(current->prev_, rhs_current);
+        setup_prev(current, rhs_current);
         rhs_current = next_rhs;
+      } else {
+        current = current->next_;
+      }
+    }
+
+    while (rhs_current != rhs.phantom_node_) {
+      rhs_current->prev_->next_ = rhs_current->next_;
+      rhs_current->next_->prev_ = rhs_current->prev_;
+      ListNode<T> *next_rhs = rhs_current->next_;
+      setup_connections(rhs_current, phantom_node_, phantom_node_->prev_);
+      setup_next(phantom_node_->prev_, rhs_current);
+      setup_prev(phantom_node_, rhs_current);
+      rhs_current = next_rhs;
     }
     size_ += rhs.size_;
     rhs.size_ = 0;
@@ -235,7 +237,7 @@ list(list &&rhs) noexcept
 
   void splice(const_iterator pos, list &rhs) {
     if (rhs.empty()) {
-        return;
+      return;
     }
 
     setup_next(pos.ptr_->prev_, rhs.phantom_node_->next_);
@@ -258,12 +260,12 @@ list(list &&rhs) noexcept
 
     while (next_node != phantom_node_) {
       if (current->data_ == next_node->data_) {
-          setup_next(current, next_node->next_);
-          setup_prev(next_node->next_, current);
-          delete_node(next_node);
-          --size_;
+        setup_next(current, next_node->next_);
+        setup_prev(next_node->next_, current);
+        delete_node(next_node);
+        --size_;
       } else {
-          current = next_node;
+        current = next_node;
       }
       next_node = current->next_;
     }
@@ -273,7 +275,7 @@ list(list &&rhs) noexcept
     for (auto i = begin(); i != end(); ++i) {
       for (auto j = begin(); j != end(); ++j) {
         if (*i < *j) {
-          std::swap(*i, *j);    
+          std::swap(*i, *j);
         }
       }
     }
@@ -285,11 +287,28 @@ list(list &&rhs) noexcept
     while (first != last) {
       --last;
       if (first == last) {
-          break;
+        break;
       }
       std::swap(*first, *last);
       ++first;
     }
+  }
+  template <typename... Args>
+  iterator insert_many(iterator pos, Args &&...args) {
+    for (auto &it : {args...}) {
+      pos = insert(pos, it);
+    }
+    return pos;
+  }
+
+  template <typename... Args>
+  void insert_many_back(Args &&...args) {
+    insert_many(end(), args...);
+  }
+
+  template <typename... Args>
+  void insert_many_front(Args &&...args) {
+    insert_many(begin(), args...);
   }
 
  private:

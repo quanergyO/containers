@@ -1,6 +1,6 @@
 #include <array>
 
-#include "../array/array.h"
+#include "../src/array/array.h"
 
 TEST(ArrayConstructors, True) {
   s21::array<int, 3> school1{1, 2, 3};
@@ -64,4 +64,39 @@ TEST(ArraySwap, True) {
   for (size_t i = 0; i < school2.size(); ++i) {
     ASSERT_EQ(school2[i], std2[i]);
   }
+}
+
+TEST(Array, At) {
+  s21::array<int, 5> school1{1, 2, 66, 73, 3};
+  ASSERT_EQ(school1.at(1), 2);
+  ASSERT_ANY_THROW(school1.at(10));
+}
+
+TEST(Array, Data) {
+  s21::array<int, 5> school1{1, 2, 66, 73, 3};
+  ASSERT_EQ(*school1.data(), 1);
+}
+
+TEST(Array, Empty) {
+  s21::array<int, 5> school1{1, 2, 3, 4, 5};
+  ASSERT_EQ(school1.empty(), false);
+  s21::array<int, 0> school2;
+  ASSERT_EQ(school2.empty(), true);
+}
+
+TEST(Array, Citerators) {
+  s21::array<int, 10> school1{1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+  auto it = school1.cbegin();
+  int i = 1;
+  while (it != school1.cend()) {
+    ASSERT_EQ(*it, i);
+    ++it;
+    ++i;
+  }
+}
+
+TEST(Array, FrontBack) {
+  s21::array<int, 5> school1{1, 2, 3, 4, 5};
+  ASSERT_EQ(school1.front(), 1);
+  ASSERT_EQ(school1.back(), 5);
 }

@@ -7,7 +7,7 @@
 #include <utility>
 
 #include "../iterators/random_access_iterator.h"
-#include "../utils/allocator.h"
+#include "../../utils/allocator.h"
 
 namespace s21 {
 template <typename T, typename Allocator = Allocator<T>>
@@ -24,14 +24,18 @@ class vector {
   vector(const Allocator &alloc = Allocator())
       : size_(0),
         capacity_(10),
-        allocator_(alloc),
+        allocator_(
+            std::allocator_traits<
+                allocator_type>::select_on_container_copy_construction(alloc)),
         data_(std::allocator_traits<allocator_type>::allocate(allocator_,
                                                               capacity_)) {}
 
   explicit vector(size_type n, const Allocator &alloc = Allocator())
       : size_(n),
         capacity_(n * 2),
-        allocator_(alloc),
+        allocator_(
+            std::allocator_traits<
+                allocator_type>::select_on_container_copy_construction(alloc)),
         data_(std::allocator_traits<allocator_type>::allocate(allocator_,
                                                               capacity_)) {
     for (auto &it : *this) {
@@ -43,7 +47,9 @@ class vector {
          const Allocator &alloc = Allocator())
       : size_(items.size()),
         capacity_(size_ * 2),
-        allocator_(alloc),
+        allocator_(
+            std::allocator_traits<
+                allocator_type>::select_on_container_copy_construction(alloc)),
         data_(std::allocator_traits<allocator_type>::allocate(allocator_,
                                                               capacity_)) {
     auto ptr = items.begin();
@@ -56,12 +62,12 @@ class vector {
   vector(const vector &rhs)
       : size_(rhs.size_),
         capacity_(rhs.capacity_),
-        allocator_(rhs.allocator_),
+        allocator_(std::allocator_traits<allocator_type>::
+                       select_on_container_copy_construction(rhs.allocator_)),
         data_(std::allocator_traits<allocator_type>::allocate(allocator_,
                                                               capacity_)) {
     size_t i = 0;
-    for (auto &it : *this)
-    {
+    for (auto &it : *this) {
       std::allocator_traits<allocator_type>::construct(allocator_, &it,
                                                        rhs.data_[i++]);
     }
@@ -85,8 +91,6 @@ class vector {
     if (this == &rhs) return *this;
     swap(rhs);
     destroy_objects_in_array(rhs.begin(), rhs.end());
-    std::allocator_traits<allocator_type>::deallocate(rhs.allocator_, rhs.data_,
-                                                      rhs.capacity_);
     return *this;
   }
 
@@ -95,8 +99,6 @@ class vector {
     std::allocator_traits<allocator_type>::deallocate(allocator_, data_,
                                                       capacity_);
   }
-
-
 
   reference at(size_type pos) {
     if (pos >= size_) {
@@ -151,8 +153,8 @@ class vector {
     iterator it = begin();
     try {
       for (; it != end(); ++it, ++count_constructed_objects) {
-        std::allocator_traits<allocator_type>::construct(allocator_, newArr + count_constructed_objects,
-                                                         *it);
+        std::allocator_traits<allocator_type>::construct(
+            allocator_, newArr + count_constructed_objects, *it);
       }
     } catch (...) {
       destroy_objects_in_array(newArr, newArr + count_constructed_objects);
@@ -178,8 +180,8 @@ class vector {
     iterator it = begin();
     try {
       for (; it != end(); ++it, ++count_constructed_objects) {
-        std::allocator_traits<allocator_type>::construct(allocator_, newArr + count_constructed_objects,
-                                                         *it);
+        std::allocator_traits<allocator_type>::construct(
+            allocator_, newArr + count_constructed_objects, *it);
       }
     } catch (...) {
       destroy_objects_in_array(newArr, newArr + count_constructed_objects);
@@ -214,7 +216,7 @@ class vector {
   }
 
   void erase(iterator pos) {
-    destroy_objects_in_array(pos, pos+1);
+    destroy_objects_in_array(pos, pos + 1);
     for (auto ptr = pos; ptr != end(); ++ptr) {
       *ptr = std::move(*(ptr + 1));
     }
@@ -247,8 +249,10 @@ class vector {
   template <typename... Args>
   iterator insert_many(iterator pos, Args &&...args) {
     size_t args_count = sizeof...(args);
-    size_t capacity_need = capacity_ > size_ + args_count ? capacity_ : capacity_ * 2;
-    T* newArr = std::allocator_traits<allocator_type>::allocate(allocator_, capacity_need);
+    size_t capacity_need =
+        capacity_ > size_ + args_count ? capacity_ : capacity_ * 2;
+    T *newArr = std::allocator_traits<allocator_type>::allocate(allocator_,
+                                                                capacity_need);
     size_t count_constructed_objects = 0;
     iterator newPos = newArr;
     try {
@@ -268,7 +272,8 @@ class vector {
     }
 
     destroy_objects_in_array(begin(), end());
-    std::allocator_traits<allocator_type>::deallocate(allocator_, data_, capacity_);
+    std::allocator_traits<allocator_type>::deallocate(allocator_, data_,
+                                                      capacity_);
     data_ = newArr;
     capacity_ = capacity_need;
     size_ += args_count;
@@ -280,15 +285,13 @@ class vector {
   void insert_many_back(Args &&...args) {
     (push_back(std::forward<Args>(args)), ...);
   }
+
  private:
-  void destroy_objects_in_array(iterator begin, iterator end)
-  {
-    for (auto it = begin; it != end; ++it)
-    {
+  void destroy_objects_in_array(iterator begin, iterator end) {
+    for (auto it = begin; it != end; ++it) {
       std::allocator_traits<allocator_type>::destroy(allocator_, &*it);
     }
   }
-  
 
  private:
   size_type size_;

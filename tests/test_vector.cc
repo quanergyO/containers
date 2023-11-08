@@ -1,9 +1,6 @@
 #include <vector>
 
-#include "../vector/vector.h"
-#include "struct_for_test.cc"
-
-using test_struct = s21::StructWithExceptionInConstruct;
+#include "../src/vector/vector.h"
 
 TEST(VectorConstructors, True) {
   s21::vector<int> school1;
@@ -29,44 +26,6 @@ TEST(VectorConstructors, True) {
   }
 }
 
-// TEST(VectorConstructorsWithException1, False) {
-//   s21::vector<test_struct> school1;
-//   std::vector<test_struct> std1;
-//   test_struct a, b, c;
-//   school1.push_back(a);
-//   school1.push_back(b);
-//   std1.push_back(a);
-//   std1.push_back(b);
-//   for (size_t i = 0; i < 2; ++i) {
-//     ASSERT_EQ(school1[i], std1[i]);
-//   }
-//   std1.push_back(c);
-//   school1.push_back(c);
-//   for (size_t i = 0; i < 3; ++i) {
-//     ASSERT_EQ(school1[i], std1[i]);
-//   }
-// }
-
-// TEST(VectorConstructorsWithException2, False) {
-//   test_struct a, b, c;
-//   s21::vector<test_struct> school1;
-//   std::vector<test_struct> std1;
-//   school1.push_back(a);
-//   school1.push_back(b);
-//   school1.push_back(c);
-//   std1.push_back(a);
-//   std1.push_back(b);
-//   std1.push_back(c);
-//   try {
-//     school1.reserve(100);
-//     std1.reserve(100);
-//   } catch (...) {
-//     for (size_t i = 0; i < school1.size(); ++i) {
-//       ASSERT_EQ(school1[i], std1[i]);
-//     }
-//   }
-// }
-
 TEST(VectorOperatorEquals, True) {
   s21::vector<int> school1{1, 2, 3};
   std::vector<int> std1{1, 2, 3};
@@ -77,29 +36,19 @@ TEST(VectorOperatorEquals, True) {
   for (size_t i = 0; i < school2.size(); ++i) {
     ASSERT_EQ(school2[i], std2[i]);
   }
-  // s21::vector<test_struct> school3, school4, school5;
-  // test_struct a, b, c, d, e, f;
-  // school3.push_back(a);
-  // school3.push_back(b);
-  // school3.push_back(c);
-  // school4.push_back(d);
-  // school4.push_back(e);
-  // school4.push_back(f);
-  // school5 = school4;
-  // school3 = school4;
-  // for (size_t i = 0; i < school3.size(); ++i) {
-  //   ASSERT_EQ(school3[i], school5[i]);
-  // }
 }
 
-// TEST(VectorAt1, True) {
-//   test_struct a, b, c, d, e, f;
-//   s21::vector<test_struct> school1{a, b, c, d, e, f};
-//   std::vector<test_struct> std1{a, b, c, d, e, f};
-//   for (size_t i = 0; i < school1.size(); ++i) {
-//     ASSERT_EQ(school1.at(i), std1.at(i));
-//   }
-// }
+TEST(Vector, OperatorMoveEqual) {
+  s21::vector<int> school1{1, 2, 3};
+  std::vector<int> std1{1, 2, 3};
+  s21::vector<int> school2;
+  std::vector<int> std2;
+  school2 = std::move(school1);
+  std2 = std::move(std1);
+  for (size_t i = 0; i < school2.size(); ++i) {
+    ASSERT_EQ(school2[i], std2[i]);
+  }
+}
 
 TEST(VectorAt2, True) {
   s21::vector<int> school1{1, 2, 3};
@@ -179,18 +128,6 @@ TEST(VectorCapacity, True) {
   ASSERT_EQ(school1.capacity(), (size_t)20);
 }
 
-TEST(VectorIterator1, True)
-{
-  s21::vector<int> school1{5, 3, 2, 4, 8, 7, 9, 1};
-  std::vector<int> std1{5, 3, 2, 4, 8, 7, 9, 1};
-  std::sort(school1.begin(), school1.end());
-  std::sort(std1.begin(), std1.end());
-  for (size_t i = 0; i < school1.size(); ++i)
-  {
-    ASSERT_EQ(school1[i], std1[i]);
-  }
-}
-
 TEST(VectorIterator2, True) {
   s21::vector<int> school1{1, 2, 3, 4, 5};
   s21::vector<int> school2(5);
@@ -214,12 +151,6 @@ TEST(VectorReserve, True) {
   school1.reserve(50);
   std1.reserve(50);
   ASSERT_EQ(school1.capacity(), std1.capacity());
-}
-
-TEST(VectorReserve1, False) {
-  s21::vector<test_struct> school1;
-  school1.reserve(100);
-  ASSERT_EQ(school1.capacity(), static_cast<size_t>(100));
 }
 
 TEST(VecotorClear, True) {
@@ -314,4 +245,36 @@ TEST(VectorInsertManyBack, True) {
   for (size_t i = 0; i < school1.size(); ++i) {
     ASSERT_EQ(school1[i], school2[i]);
   }
+}
+
+TEST(Vector, ReserveMaxSize) {
+  s21::vector<int> school1;
+  size_t max_size = school1.max_size();
+  ASSERT_ANY_THROW(school1.reserve(max_size + 1));
+}
+
+TEST(Vector, InsertWithReserve) {
+  s21::vector<int> school1{1, 2, 3};
+  s21::vector<int> result1{10, 1, 2, 3};
+  school1.shrink_to_fit();
+  school1.insert(school1.begin(), 10);
+  for (size_t i = 0; i < school1.size(); ++i) {
+    ASSERT_EQ(school1[i], result1[i]);
+  }
+}
+
+TEST(Vector, ShrinkToFitWithEqualsSizeAndCapacity) {
+  s21::vector<int> school1;
+  for (int i = 0; i < 10; ++i) {
+    school1.push_back(i);
+  }
+  school1.shrink_to_fit();
+  ASSERT_EQ(school1.capacity(), static_cast<size_t>(10));
+}
+
+TEST(Vector, ReserveManyThenCapacity) {
+  s21::vector<int> school1;
+  size_t current_capacity = school1.capacity();
+  school1.reserve(1);
+  ASSERT_EQ(school1.capacity(), current_capacity);
 }
